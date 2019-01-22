@@ -5,14 +5,13 @@ use Getopt::Std;
 use File::Temp qw/ tempfile /;
 use JSON;
 
-=pod
 =head1 NAME
 
-slack2mail.pl - script forwards mail messages from local mailbox 
+slack2mail.pl - script forwards mail messages from local mailbox
                 to specified slack team's channel
 
 =head1 SYNOPSIS
- 
+
   slack2mail.pl -c "#sysops" -w "https://hooks.slack.com/services/..."
 
 =head1 DESCRIPTION
@@ -22,19 +21,24 @@ slack team's channel. It uses C</bin/mail> to check, retrieve, and delete
 messages from local mailbox; it uses C</usr/bin/curl> to trigger webhook
 and send contents of the mail messages.
 
-B<NOTE>: After the mail message is successfully sent to slack, it is 
-U<deleted> from the local mailbox.
+B<NOTE>: After the mail message is successfully sent to slack, it is
+I<deleted> from the local mailbox.
 
 =head2 Parameters
 
 =over 10
+
 =item C<-c>
 Slack team's channel name.
+
 =item C<-v>
 Show debugging output.
+
 =item C<-w>
 Slack team's webhook URL.
+
 =back
+
 =cut
 
 use strict;
