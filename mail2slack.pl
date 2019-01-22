@@ -7,29 +7,17 @@ mail2slack.pl - script forwards mail messages from local mailbox
 
 =head1 SYNOPSIS
 
-mail2slack.pl -yc "#sysops" -w "https://hooks.slack.com/services/..."
+mail2slack.pl [parameters]
 
-=head1 OPTIONS
+=head2 Parameters:
 
-=over 10
-
-=item C<-f>
-Read I<slack-notify> configuration file.
-
-=item C<-c>
-Slack team's channel name.
-
-=item C<-v>
-Show debugging output.
-
-=item C<-w>
-Slack team's webhook URL.
-
-=item C<-y>
-Allow processing mailbox and removal of messages. I<Must> be specified
-on command line in order for the tool to actually do something.
-
-=back
+ -f <conf>      Read configuration from file.
+ -c <channel>   Slack team's channel name.
+ -v             Show log messages (otherwise reports only errors).
+ -w <url>       Slack team's webhook URL.
+ -y             Allow processing mailbox and removal of messages.
+                I<Must> be specified on command line in order for
+                the tool to actually do something.
 
 =head1 DESCRIPTION
 
@@ -48,6 +36,7 @@ use Getopt::Std;
 use File::Temp qw/tempfile/;
 use JSON;
 use YAML::Tiny;
+use POSIX;
 
 use strict;
 use warnings;
@@ -56,12 +45,25 @@ my $slack_webhook = "https://hooks.slack.com/services/...";
 my $slack_channel = "#random";
 my $slack_tag     = "";
 
+my $DEBUG = 0;
+my $VERBOSE = 0;
+
 sub debug {
-  if (defined($ENV{'DEBUG'}) && $ENV{'DEBUG'} eq "1") {
+  if ($DEBUG) {
     my @args = @_;
     for (@args) {
       chomp;
       print "D: " . $_ . "\n";
+    }
+  }
+}
+
+sub info {
+  if ($DEBUG || $VERBOSE) {
+    my @args = @_;
+    for (@args) {
+      chomp;
+      print "$_\n";
     }
   }
 }
@@ -106,9 +108,8 @@ sub check_deps {
 #
 # --- main
 #
-
 my %opts;
-getopts("f:vw:c:t:y",\%opts) or pod2usage(-verbose=>1,-exitval=>2);
+getopts("f:dvw:c:t:y",\%opts) or pod2usage(-verbose=>1,-exitval=>2);
 
 pod2usage(-verbose=>2,-exitval=>3) if (!defined($opts{y}));
 
@@ -119,13 +120,15 @@ if (defined($opts{f})) {
     print STDERR "E: $YAML::Tiny::errstr\n";
     exit 1;
   }
-  
-  $slack_webhook = $config->[0]->{post_url} if defined($config->[0]->{post_url});
+
+  $slack_webhook = $config->[0]->{webhook}  if defined($config->[0]->{webhook});
   $slack_channel = $config->[0]->{channel}  if defined($config->[0]->{channel});
   $slack_tag = $config->[0]->{tag}          if defined($config->[0]->{tag});
-  
+
 }
-$ENV{'DEBUG'}=1 if defined($opts{v});
+$DEBUG   = 1 if defined($opts{d});
+$VERBOSE = 1 if defined($opts{v});
+
 $slack_webhook = $opts{w} if defined($opts{w});
 $slack_channel = $opts{c} if defined($opts{c});
 $slack_tag = $opts{t} if defined($opts{t});
@@ -134,7 +137,7 @@ check_deps();
 
 my ($rc, @mail) = run("/bin/mail -H");
 if ($rc == 0 && $#mail >= 0 && $mail[0] =~ /No mail for/) {
-  debug "No mail";
+  info "No mail";
   exit 0;
 }
 if ($rc != 0) {
@@ -143,11 +146,11 @@ if ($rc != 0) {
 }
 
 unless (@mail) {
-  debug "No mail";
+  info "No mail";
   exit 0;
 }
 
-debug @mail;
+info @mail;
 
 for (@mail) {
   my ($rc, @msg) = run("/bin/echo type 1 | mail -N");
@@ -160,7 +163,7 @@ for (@mail) {
   # remove leading and trailing lines added by mailx
   # pick up subject/to, split into 3k chunks (slack doesn't like bigger)
   #
-  my ($subj, $to, $header) = ( "", "", "" );
+  my ($subj, $from, $to, $header) = ( "", "", "", "" );
   my ($i,$sz,$part) = (0,3,"```");
   my @text;
 
@@ -179,6 +182,10 @@ for (@mail) {
       $to = $_;
       $to =~ s/^To: //;
     }
+    if (/From: /) {
+      $from = $_;
+      $from =~ s/^From: //;
+    }
 
     $sz += length($_);
     $part .= "\n" . $_;
@@ -194,7 +201,8 @@ for (@mail) {
     }
   }
   if ($header eq "") {
-    $header = $slack_tag eq "" ? "" : "`$slack_tag` " . "*$to*: _${subj}_";
+    $header = $slack_tag eq "" ? "" : "`$slack_tag` ";
+    $header .= "*$to*: _${subj}_";
   }
   $part .= "```";
   $part = ":e-mail: " . $header . $part;
@@ -230,9 +238,11 @@ for (@mail) {
       exit 1;
     }
 
-    send2slack({ 
+    send2slack({
       'channel' => $slack_channel,
       'username' => 'mail2slack',
       'text' => ":e-mail: :negative_squared_cross_mark: deleted - " . $header });
+
+    info("Message processed: $from -> $to | $subj");
   }
 }
