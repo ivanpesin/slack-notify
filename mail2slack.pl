@@ -98,12 +98,13 @@ sub send2slack {
     splice @out, $#out - 1;
   }
   debug(" rc = $rc | code = $code | out = @out");
+  unlink($filename) or warn "E: Failed to remove temporary file: $filename\n";
   return ($rc, $code, @out);
 }
 
 sub check_deps {
   unless (-x "/bin/mail") {
-    print STDERR "E: /bin/mail is required\n";
+    warn "E: /bin/mail is required\n";
     exit 1;
   }
   unless (-x "/usr/bin/curl") {
