@@ -7,19 +7,9 @@ mail2slack.pl - script forwards mail messages from local mailbox
 
 =head1 SYNOPSIS
 
-  mail2slack.pl -c "#sysops" -w "https://hooks.slack.com/services/..."
+mail2slack.pl -yc "#sysops" -w "https://hooks.slack.com/services/..."
 
-=head1 DESCRIPTION
-
-This scripts forwards mail messages from local mailbox to specified
-slack team's channel. It uses C</bin/mail> to check, retrieve, and delete
-messages from local mailbox; it uses C</usr/bin/curl> to trigger webhook
-and send contents of the mail messages.
-
-B<NOTE>: After the mail message is successfully sent to slack, it is
-I<deleted> from the local mailbox.
-
-=head2 Parameters
+=head1 OPTIONS
 
 =over 10
 
@@ -35,13 +25,27 @@ Show debugging output.
 =item C<-w>
 Slack team's webhook URL.
 
+=item C<-y>
+Allow processing mailbox and removal of messages. I<Must> be specified
+on command line in order for the tool to actually do something.
+
 =back
+
+=head1 DESCRIPTION
+
+This scripts forwards mail messages from local mailbox to specified
+slack team's channel. It uses C</bin/mail> to check, retrieve, and delete
+messages from local mailbox; it uses C</usr/bin/curl> to trigger webhook
+and send contents of the mail messages.
+
+B<NOTE>: After the mail message is successfully sent to slack, it is
+I<deleted> from the local mailbox.
 
 =cut
 
-
+use Pod::Usage qw/pod2usage/;
 use Getopt::Std;
-use File::Temp qw/ tempfile /;
+use File::Temp qw/tempfile/;
 use JSON;
 use YAML::Tiny;
 
@@ -104,7 +108,9 @@ sub check_deps {
 #
 
 my %opts;
-getopts("f:vw:c:ht:",\%opts);
+getopts("f:vw:c:t:y",\%opts) or pod2usage(-verbose=>1,-exitval=>2);
+
+pod2usage(-verbose=>2,-exitval=>3) if (!defined($opts{y}));
 
 if (defined($opts{f})) {
   my $config = YAML::Tiny->read($opts{f});
