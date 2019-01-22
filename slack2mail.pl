@@ -1,10 +1,5 @@
 #!/usr/bin/perl
 # vim: ts=2 sts=2 sw=2 et si nu
-
-use Getopt::Std;
-use File::Temp qw/ tempfile /;
-use JSON;
-
 =head1 NAME
 
 slack2mail.pl - script forwards mail messages from local mailbox
@@ -41,11 +36,18 @@ Slack team's webhook URL.
 
 =cut
 
+
+use Getopt::Std;
+use File::Temp qw/ tempfile /;
+use JSON;
+use YAML::Tiny;
+
 use strict;
 use warnings;
 
 my $slack_webhook = "https://hooks.slack.com/services/...";
 my $slack_channel = "#random";
+my $slack_tag     = "";
 
 sub debug {
   if (defined($ENV{'DEBUG'}) && $ENV{'DEBUG'} eq "1") {
@@ -99,11 +101,25 @@ sub check_deps {
 #
 
 my %opts;
-getopts("f:vw:c:h",\%opts);
+getopts("f:vw:c:ht:",\%opts);
 
+if (defined($opts{f})) {
+  my $config = YAML::Tiny->read($opts{f});
+  if (!defined($config)) {
+    print STDERR "E: failed to read config file: $opts{f}\n";
+    print STDERR "E: $YAML::Tiny::errstr\n";
+    exit 1;
+  }
+  
+  $slack_webhook = $config->[0]->{post_url} if defined($config->[0]->{post_url});
+  $slack_channel = $config->[0]->{channel}  if defined($config->[0]->{channel});
+  $slack_tag = $config->[0]->{tag}          if defined($config->[0]->{tag});
+  
+}
 $ENV{'DEBUG'}=1 if defined($opts{v});
 $slack_webhook = $opts{w} if defined($opts{w});
 $slack_channel = $opts{c} if defined($opts{c});
+$slack_tag = $opts{t} if defined($opts{t});
 
 check_deps();
 
@@ -135,7 +151,7 @@ for (@mail) {
   # remove leading and trailing lines added by mailx
   # pick up subject/to, split into 3k chunks (slack doesn't like bigger)
   #
-  my ($subj, $to) = ( "", "" );
+  my ($subj, $to, $header) = ( "", "", "" );
   my ($i,$sz,$part) = (0,3,"```");
   my @text;
 
@@ -150,7 +166,7 @@ for (@mail) {
       $subj = $_;
       $subj =~ s/^Subject: //;
     }
-        if (/To: /) {
+    if (/To: /) {
       $to = $_;
       $to =~ s/^To: //;
     }
@@ -158,18 +174,24 @@ for (@mail) {
     $sz += length($_);
     $part .= "\n" . $_;
     if ($sz > 3000) {
+      if ($header eq "") {
+        $header = $slack_tag eq "" ? "" : "`$slack_tag` " . "*$to*: _${subj}_";
+      }
       $part .= "```";
-      $part = ":e-mail: *$to*: _${subj}_" . $part;
+      $part = ":e-mail: " . $header . $part;
       push @text, $part;
       $part = "```";
       $sz = 3;
     }
   }
+  if ($header eq "") {
+    $header = $slack_tag eq "" ? "" : "`$slack_tag` " . "*$to*: _${subj}_";
+  }
   $part .= "```";
-  $part = ":e-mail: *$to*: _${subj}_" . $part;
+  $part = ":e-mail: " . $header . $part;
   push @text, $part;
 
-  debug(" -> $to | $subj");
+  debug(" -> [ tag:$slack_tag ] $to | $subj");
   debug(" chunks: " . ($#text + 1));
 
   my $ok_to_rm = 1;
@@ -184,7 +206,7 @@ for (@mail) {
     if ($code != 200 || $rc != 0 ) {
       print STDERR "E: rc = $rc | code = $code\n";
       print STDERR "E: rcvd:\n@out";
-      print STDERR "E: failed to send message part to slack, aborting ...";
+      print STDERR "E: failed to send message part to slack, aborting ...\n";
       $ok_to_rm = 0;
       exit 1;
     }
@@ -199,6 +221,9 @@ for (@mail) {
       exit 1;
     }
 
-    send2slack({ 'channel' => $slack_channel,'username' => 'mail2slack','text' => ":e-mail: :negative_squared_cross_mark: deleted - *$to*: _${subj}_" });
+    send2slack({ 
+      'channel' => $slack_channel,
+      'username' => 'mail2slack',
+      'text' => ":e-mail: :negative_squared_cross_mark: deleted - " . $header });
   }
 }
