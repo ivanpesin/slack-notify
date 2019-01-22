@@ -2,12 +2,12 @@
 # vim: ts=2 sts=2 sw=2 et si nu
 =head1 NAME
 
-slack2mail.pl - script forwards mail messages from local mailbox
+mail2slack.pl - script forwards mail messages from local mailbox
                 to specified slack team's channel
 
 =head1 SYNOPSIS
 
-  slack2mail.pl -c "#sysops" -w "https://hooks.slack.com/services/..."
+  mail2slack.pl -c "#sysops" -w "https://hooks.slack.com/services/..."
 
 =head1 DESCRIPTION
 
@@ -22,6 +22,9 @@ I<deleted> from the local mailbox.
 =head2 Parameters
 
 =over 10
+
+=item C<-f>
+Read I<slack-notify> configuration file.
 
 =item C<-c>
 Slack team's channel name.
