@@ -183,8 +183,8 @@ for (@mail) {
     my ($rc, $code, @out) = send2slack \%notification;
     if ($code != 200 || $rc != 0 ) {
       print STDERR "E: rc = $rc | code = $code\n";
-      print STDERR "E: rcvd:\n@out\n";
-      print STDERR "E: failed to send message part to slack, skipping ...";
+      print STDERR "E: rcvd:\n@out";
+      print STDERR "E: failed to send message part to slack, aborting ...";
       $ok_to_rm = 0;
       exit 1;
     }
