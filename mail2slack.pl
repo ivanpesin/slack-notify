@@ -29,6 +29,13 @@ and send contents of the mail messages.
 B<NOTE>: After the mail message is successfully sent to slack, it is
 I<deleted> from the local mailbox.
 
+=head1 EXAMPLES
+
+mail2slack.pl -yvc "#sysops" -w "https://hooks.slack.com/services/..."
+
+Process current user's mailbox, and forward all messages to slack 
+channel C<#sysops>, displaying progress information to standard output.
+
 =cut
 
 use Pod::Usage qw/pod2usage/;
