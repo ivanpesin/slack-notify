@@ -129,9 +129,15 @@ if (defined($opts{f})) {
     exit 1;
   }
 
+  # default slack-notify configuration
   $slack_webhook = $config->[0]->{webhook}  if defined($config->[0]->{webhook});
   $slack_channel = $config->[0]->{channel}  if defined($config->[0]->{channel});
   $slack_tag = $config->[0]->{tag}          if defined($config->[0]->{tag});
+  
+  # mail2slack specific configuration
+  $slack_webhook = $config->[0]->{mail2slack_webhook}  if defined($config->[0]->{mail2slack_webhook});
+  $slack_channel = $config->[0]->{mail2slack_channel}  if defined($config->[0]->{mail2slack_channel});
+  $slack_tag = $config->[0]->{mail2slack_tag}          if defined($config->[0]->{mail2slack_tag});
 
 }
 $DEBUG   = 1 if defined($opts{d});
