@@ -98,7 +98,7 @@ sub send2slack {
     splice @out, $#out - 1;
   }
   debug(" rc = $rc | code = $code | out = @out");
-  unlink($filename) or warn "E: Failed to remove temporary file: $filename\n";
+  unlink($fn) or warn "E: Failed to remove temporary file: $fn\n";
   return ($rc, $code, @out);
 }
 
