@@ -147,6 +147,12 @@ $slack_webhook = $opts{w} if defined($opts{w});
 $slack_channel = $opts{c} if defined($opts{c});
 $slack_tag = $opts{t} if defined($opts{t});
 
+debug(" --- configuration ------- ");
+debug("webhook: $slack_webhook");
+debug("channel: $slack_channel");
+debug("    tag: $slack_tag");
+debug(" ------------------------- ");
+
 check_deps();
 
 my ($rc, @mail) = run("/bin/mail -H");
