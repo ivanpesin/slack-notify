@@ -16,12 +16,12 @@ func sendMsg(c *cli.Context) error {
 
 	// create payload for slack message
 	payload := &slack.Message{}
-	payload.Channel = c.GlobalString("channel")
-	payload.Username = c.GlobalString("username")
+	payload.Channel = config.Channel
+	payload.Username = config.Username
 	payload.Text = msg
 
 	slack.Debug = config.Debug
-	if err := slack.Send(c.GlobalString("webhook"), payload); err != nil {
+	if err := slack.Send(config.Webhook, payload); err != nil {
 		return cli.NewExitError(
 			fmt.Sprintf("Error: %v", err), 2)
 	}

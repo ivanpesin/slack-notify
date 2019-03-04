@@ -38,8 +38,8 @@ func sendMonit(c *cli.Context) error {
 
 	// create payload for slack message
 	payload := &slack.Message{}
-	payload.Channel = c.GlobalString("channel")
-	payload.Username = c.GlobalString("username")
+	payload.Channel = config.Channel
+	payload.Username = config.Username
 	payload.Attachments = append(payload.Attachments, slack.Attachment{})
 	payload.Attachments[0].Color = monit.color
 	payload.Attachments[0].Fallback = fmt.Sprintf("%s: %s on %s\n%s", monit.service, monit.event, monit.host, monit.description)
@@ -51,7 +51,7 @@ func sendMonit(c *cli.Context) error {
 	}
 
 	slack.Debug = config.Debug
-	if err := slack.Send(c.GlobalString("webhook"), payload); err != nil {
+	if err := slack.Send(config.Webhook, payload); err != nil {
 		return cli.NewExitError(
 			fmt.Sprintf("Error: %v", err), 2)
 	}
