@@ -1,0 +1,4 @@
+[Path]
+PathModified=/var/mail/%i
+
+[Install]

@@ -1,0 +1,11 @@
+[Unit]
+Description=mail2slack activator
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/slack-notify -i mail
+User=%i
+
+[Install]
+WantedBy=multi-user.target
