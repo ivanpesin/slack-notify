@@ -80,6 +80,11 @@ Example:
 
 >NOTE: If no message is provided, `slack-notify` will send a test message.
 
+If configuration file is in place, then the command can be as simple as:
+
+    $ slack-notify msg "Example *message* with _markdown_"
+    $
+
 ## monit
 
 Sends a [monit](https://mmonit.com/monit/) event to slack.
