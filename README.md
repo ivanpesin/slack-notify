@@ -5,8 +5,9 @@ supports the following 3 modes:
 
 - `msg`: sends a short message to slack. Useful for notifications from scripts.
 - `monit`: sends a *monit* event to slack. See below the example of
-  configuration and the message
-- `mail`: forwards local mail to slack
+  configuration and the message.
+- `mail`: forwards local mail to slack. See below the the example of
+  configuration and the message.
 
 ## Help screen
 
