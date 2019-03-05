@@ -64,8 +64,8 @@ mail_username: "mail2slack@myserver"
 `monit_*` and `mail_*` options are used to override respective options for
 `monit` and `mail` modes. 
 
-> NOTE: Command line options and envrionment variables have a higher priority
-> over configuration file.
+> NOTE: Command line options and environment variables have a higher priority
+> then values specified in configuration file.
 
 ## msg
 
@@ -84,6 +84,12 @@ If configuration file is in place, then the command can be as simple as:
 
     $ slack-notify msg "Example *message* with _markdown_"
     $
+
+The message is read from `stdin` if dash (`-`) is specified on command line:
+
+    $ echo "Example *message* with _markdown_" | slack-notify msg -
+    $
+
 
 ## monit
 

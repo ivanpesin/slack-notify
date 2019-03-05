@@ -40,7 +40,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "slack-notify"
 	app.Usage = "send information to slack via webhook"
-	app.Version = "2.0.0/" + buildTime + "/" + buildCommit
+	app.Version = "2.0.1/" + buildTime + "/" + buildCommit
 
 	hn, _ := os.Hostname()
 

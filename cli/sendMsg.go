@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
 
 	"github.com/ivanpesin/slack-notify/slack"
 	"gopkg.in/urfave/cli.v1"
@@ -10,9 +13,21 @@ import (
 func sendMsg(c *cli.Context) error {
 
 	msg := c.Args().First()
+	if msg == "-" {
+		b, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			return cli.NewExitError(
+				fmt.Sprintf("Error: %v", err), 1)
+		}
+
+		msg = string(b)
+	}
+
 	if msg == "" {
 		msg = "This is a test message."
 	}
+
+	msg = strings.ReplaceAll(msg, "\\n", "\n")
 
 	// create payload for slack message
 	payload := &slack.Message{}
